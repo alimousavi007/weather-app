@@ -5,44 +5,79 @@ const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
 function App() {
   const [weatherData, setWeatherData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // در ابتدا لودینگ است
+  const [isLoading, setIsLoading] = useState(true); // 
   const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
-  const [city, setCity] = useState('Tehran'); // شهر پیش‌فرض برای اولین بارگذاری
+  const [city, setCity] = useState(null); //
 
-  useEffect(() => {
-    // اگر city خالی بود، هیچ کاری نکن (برای جلوگیری از درخواست خالی)
-    if (!city) return;
-
-    async function fetchWeather() {
+  useEffect( () =>{
+    if(!city) return;
+    const fetchWeather = async () => {
       setIsLoading(true);
       setError(null);
-      try {
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=fa`);
-        
-        if (!response.ok) {
-          // مدیریت خطاهای HTTP مثل 404 (شهر یافت نشد)
-          throw new Error(`شهر "${city}" یافت نشد. لطفاً دوباره تلاش کنید.`);
+        try {
+          const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=fa`)      
+          if(!response.ok) throw new Error("داده‌ای دریافت نشد. دوباره تلاش کنید.");
+          const data = await response.json();
+          setWeatherData(data);
+          setCity(data.name);
+          setIsLoading(false);
+        } catch (error) {
+          setError(error.message);
         }
-        
-        const data = await response.json();
-        setWeatherData(data);
-
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
+        finally{
+          setIsLoading(false);
+        }
+    };
     fetchWeather();
-  }, [city]); // useEffect فقط زمانی اجرا می‌شود که city تغییر کند
+  },[city])
 
+  const fetchByCoords = async (lat, lon) =>{
+    try {
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=fa`);
+      if(!response.ok) throw new Error("داده‌ای دریافت نشد. لطفا دوباره امتحان کنید.");
+      const data = await response.json();
+      setCity(data.name);
+      setIsLoading(false);
+      setWeatherData(data);
+    } catch (err) {
+      setError(err.message);
+    }
+    finally{
+      setIsLoading(false);
+    }
+  };
+
+  useEffect( () => {
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition( (position) =>{
+        const {latitude, longitude} = position.coords;
+        fetchByCoords(latitude, longitude);
+      },(err) => {
+        setCity('Mashhad');
+        setError(err.message);
+      }
+      );
+    }
+  },[]); 
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
       setCity(query);
       setQuery('');
+    }
+  };
+
+  const handleLocationClick = () => {
+    if(navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition( (position) =>{
+        const {latitude, longitude} = position.coords;
+        fetchByCoords(latitude,longitude);
+      },(err) =>{
+        setError(err.message);
+      }
+    );
     }
   };
 
@@ -54,14 +89,17 @@ function App() {
       <form onSubmit={handleSubmit} className="w-full max-w-sm mb-8 flex gap-2">
         <input 
           type="text" 
-          placeholder="نام شهر مورد نظر را وارد کن..." 
-          required
+          placeholder="نام شهر ..." 
+          
           value={query} 
           onChange={(e) => setQuery(e.target.value)} 
           className="w-full p-3 bg-white/30 text-white placeholder-white/70 rounded-lg border-none focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm"
         />
         <button type="submit" className="p-3 bg-white/30 rounded-lg hover:bg-white/40 transition-colors">
           🔍
+        </button>
+        <button title="موقعیت مکانی من " type='button' className='bg-white/30 p-3 rounded-lg hover:bg-white/40 transition-colors' onClick={handleLocationClick}>
+        🎯
         </button>
       </form>
 
@@ -109,5 +147,4 @@ function App() {
     </div>
   );
 }
-
 export default App;

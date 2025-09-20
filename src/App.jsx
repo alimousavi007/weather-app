@@ -21,7 +21,6 @@ function App() {
           const data = await response.json();
           setWeatherData(data);
           setCity(data.name);
-          setIsLoading(false);
         } catch (error) {
           setError(error.message);
         }
@@ -38,7 +37,6 @@ function App() {
       if(!response.ok) throw new Error("داده‌ای دریافت نشد. لطفا دوباره امتحان کنید.");
       const data = await response.json();
       setCity(data.name);
-      setIsLoading(false);
       setWeatherData(data);
     } catch (err) {
       setError(err.message);
@@ -81,9 +79,52 @@ function App() {
     }
   };
 
+  /*const getBackgroundClass = (weatherCondition) => {
+    switch (weatherCondition?.toLowerCase()) {
+      case 'clouds':
+        return 'bg-gradient-clouds';
+      case 'clear':
+        return 'bg-gradient-clear';
+      case 'rain':
+        return 'bg-gradient-rain';
+      case 'snow':
+        return 'bg-gradient-snow';    
+      default:
+        return 'bg-gradient-default';
+    }
+  };*/
+const weatherBackgrounds = {
+  clear: "bg-gradient-clear",
+  clouds: "bg-gradient-clouds",
+  rain: "bg-gradient-rain",
+  snow: "bg-gradient-snow",
+  thunderstorm: "bg-gradient-thunderstorm",
+  drizzle: "bg-gradient-drizzle",
+  mist: "bg-gradient-mist",
+  smoke: "bg-gradient-smoke",
+  haze: "bg-gradient-haze",
+  dust: "bg-gradient-dust",
+  fog: "bg-gradient-fog",
+  sand: "bg-gradient-sand",
+  ash: "bg-gradient-ash",
+  squall: "bg-gradient-squall",
+  tornado: "bg-gradient-tornado",
+};
+
+const getBackgroundClass = (weatherCondition) => {
+  if (!weatherCondition) return "bg-gradient-default";
+  return weatherBackgrounds[weatherCondition.toLowerCase()] || "bg-gradient-default";
+};
+const backgroundClass = weatherData
+  ? getBackgroundClass(weatherData.weather?.[0]?.main)
+  : "bg-gradient-default";
+
+  /*const backgroundClass = weatherData ?
+    getBackgroundClass(weatherData.weather?.[0]?.main) : 'bg-gradient-default';*/
+
   return (
     // کانتینر اصلی صفحه
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-400 to-indigo-600 p-4 font-sans">
+    <div className={`min-h-screen flex flex-col items-center justify-center ${backgroundClass} p-4 font-sans transition-all duration-500`}>
       
       {/* فرم جستجو */}
       <form onSubmit={handleSubmit} className="w-full max-w-sm mb-8 flex gap-2">
